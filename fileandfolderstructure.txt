@@ -1,0 +1,363 @@
+MINING-OPS-SAAS/                    # ROOT PROJECT DIRECTORY
+│
+├── .env                             # Environment variables
+├── .env.example                     # Example environment file
+├── .gitignore
+├── README.md
+├── docker-compose.yml               # Docker setup for local dev
+├── package.json                     # Root package manager
+│
+├── docs/                            # Documentation
+│   ├── API.md
+│   ├── SETUP.md
+│   └── ARCHITECTURE.md
+│
+├── prisma/                          # Database Layer
+│   ├── schema.prisma                # Database schema (already created)
+│   ├── migrations/                  # Migration history
+│   └── seed.ts                      # Seed data
+│
+├── src/                             # MAIN SOURCE CODE
+│   │
+│   ├── server/                      # BACKEND (Node.js/Express)
+│   │   ├── index.ts                 # Server entry point
+│   │   ├── app.ts                   # Express app setup
+│   │   │
+│   │   ├── config/                  # Configuration
+│   │   │   ├── database.ts
+│   │   │   ├── auth.ts
+│   │   │   ├── redis.ts
+│   │   │   └── environment.ts
+│   │   │
+│   │   ├── middleware/              # Express middleware
+│   │   │   ├── auth.middleware.ts
+│   │   │   ├── error.middleware.ts
+│   │   │   ├── validation.middleware.ts
+│   │   │   ├── cors.middleware.ts
+│   │   │   └── logger.middleware.ts
+│   │   │
+│   │   ├── routes/                  # API Routes
+│   │   │   ├── index.ts
+│   │   │   ├── auth.routes.ts
+│   │   │   ├── users.routes.ts
+│   │   │   ├── organizations.routes.ts
+│   │   │   ├── sites.routes.ts
+│   │   │   ├── equipment.routes.ts
+│   │   │   ├── maintenance.routes.ts
+│   │   │   ├── telemetry.routes.ts
+│   │   │   ├── fuel.routes.ts
+│   │   │   ├── production.routes.ts
+│   │   │   ├── inspections.routes.ts
+│   │   │   ├── incidents.routes.ts
+│   │   │   ├── shifts.routes.ts
+│   │   │   └── analytics.routes.ts
+│   │   │
+│   │   ├── controllers/             # Request handlers
+│   │   │   ├── auth.controller.ts
+│   │   │   ├── users.controller.ts
+│   │   │   ├── organizations.controller.ts
+│   │   │   ├── sites.controller.ts
+│   │   │   ├── equipment.controller.ts
+│   │   │   ├── maintenance.controller.ts
+│   │   │   ├── telemetry.controller.ts
+│   │   │   ├── fuel.controller.ts
+│   │   │   ├── production.controller.ts
+│   │   │   ├── inspections.controller.ts
+│   │   │   ├── incidents.controller.ts
+│   │   │   ├── shifts.controller.ts
+│   │   │   └── analytics.controller.ts
+│   │   │
+│   │   ├── services/                # Business logic
+│   │   │   ├── auth.service.ts
+│   │   │   ├── users.service.ts
+│   │   │   ├── organizations.service.ts
+│   │   │   ├── sites.service.ts
+│   │   │   ├── equipment.service.ts
+│   │   │   ├── maintenance.service.ts
+│   │   │   ├── telemetry.service.ts
+│   │   │   ├── fuel.service.ts
+│   │   │   ├── production.service.ts
+│   │   │   ├── inspections.service.ts
+│   │   │   ├── incidents.service.ts
+│   │   │   ├── shifts.service.ts
+│   │   │   ├── analytics.service.ts
+│   │   │   ├── notification.service.ts
+│   │   │   └── email.service.ts
+│   │   │
+│   │   ├── repositories/            # Database access layer
+│   │   │   ├── base.repository.ts
+│   │   │   ├── users.repository.ts
+│   │   │   ├── equipment.repository.ts
+│   │   │   ├── maintenance.repository.ts
+│   │   │   ├── telemetry.repository.ts
+│   │   │   └── analytics.repository.ts
+│   │   │
+│   │   ├── validators/              # Data validation
+│   │   │   ├── auth.validator.ts
+│   │   │   ├── equipment.validator.ts
+│   │   │   ├── maintenance.validator.ts
+│   │   │   └── common.validator.ts
+│   │   │
+│   │   ├── types/                   # TypeScript types
+│   │   │   ├── auth.types.ts
+│   │   │   ├── equipment.types.ts
+│   │   │   ├── maintenance.types.ts
+│   │   │   ├── api.types.ts
+│   │   │   └── common.types.ts
+│   │   │
+│   │   ├── utils/                   # Utility functions
+│   │   │   ├── jwt.util.ts
+│   │   │   ├── hash.util.ts
+│   │   │   ├── date.util.ts
+│   │   │   ├── pagination.util.ts
+│   │   │   ├── calculations.util.ts
+│   │   │   └── logger.util.ts
+│   │   │
+│   │   ├── websocket/               # WebSocket/Socket.io
+│   │   │   ├── index.ts
+│   │   │   ├── handlers/
+│   │   │   │   ├── telemetry.handler.ts
+│   │   │   │   └── notifications.handler.ts
+│   │   │   └── events.ts
+│   │   │
+│   │   ├── jobs/                    # Background jobs (Bull)
+│   │   │   ├── index.ts
+│   │   │   ├── queue.ts
+│   │   │   ├── processors/
+│   │   │   │   ├── maintenance-scheduler.processor.ts
+│   │   │   │   ├── report-generator.processor.ts
+│   │   │   │   └── data-aggregation.processor.ts
+│   │   │   └── schedulers/
+│   │   │       ├── daily-kpi.scheduler.ts
+│   │   │       └── notification.scheduler.ts
+│   │   │
+│   │   └── db/                      # Database client
+│   │       └── prisma.ts            # Prisma client instance
+│   │
+│   ├── client/                      # FRONTEND (Next.js 14)
+│   │   │
+│   │   ├── app/                     # Next.js App Router
+│   │   │   ├── layout.tsx           # Root layout
+│   │   │   ├── page.tsx             # Home page
+│   │   │   ├── globals.css          # Global styles
+│   │   │   │
+│   │   │   ├── (auth)/              # Auth group
+│   │   │   │   ├── login/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── register/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   └── layout.tsx
+│   │   │   │
+│   │   │   ├── (dashboard)/         # Main app group (protected)
+│   │   │   │   ├── layout.tsx       # Dashboard layout with sidebar
+│   │   │   │   ├── dashboard/
+│   │   │   │   │   └── page.tsx     # Main dashboard
+│   │   │   │   │
+│   │   │   │   ├── equipment/       # Equipment management
+│   │   │   │   │   ├── page.tsx     # Equipment list
+│   │   │   │   │   ├── [id]/
+│   │   │   │   │   │   ├── page.tsx # Equipment detail
+│   │   │   │   │   │   └── edit/
+│   │   │   │   │   │       └── page.tsx
+│   │   │   │   │   └── new/
+│   │   │   │   │       └── page.tsx
+│   │   │   │   │
+│   │   │   │   ├── maintenance/     # Maintenance
+│   │   │   │   │   ├── page.tsx
+│   │   │   │   │   ├── schedule/
+│   │   │   │   │   │   └── page.tsx
+│   │   │   │   │   ├── history/
+│   │   │   │   │   │   └── page.tsx
+│   │   │   │   │   └── [id]/
+│   │   │   │   │       └── page.tsx
+│   │   │   │   │
+│   │   │   │   ├── telemetry/       # Real-time monitoring
+│   │   │   │   │   ├── page.tsx
+│   │   │   │   │   ├── live/
+│   │   │   │   │   │   └── page.tsx
+│   │   │   │   │   └── [equipmentId]/
+│   │   │   │   │       └── page.tsx
+│   │   │   │   │
+│   │   │   │   ├── fuel/            # Fuel management
+│   │   │   │   │   ├── page.tsx
+│   │   │   │   │   ├── logs/
+│   │   │   │   │   │   └── page.tsx
+│   │   │   │   │   └── analytics/
+│   │   │   │   │       └── page.tsx
+│   │   │   │   │
+│   │   │   │   ├── production/      # Production tracking
+│   │   │   │   │   ├── page.tsx
+│   │   │   │   │   └── reports/
+│   │   │   │   │       └── page.tsx
+│   │   │   │   │
+│   │   │   │   ├── inspections/     # Inspections
+│   │   │   │   │   ├── page.tsx
+│   │   │   │   │   ├── new/
+│   │   │   │   │   │   └── page.tsx
+│   │   │   │   │   └── [id]/
+│   │   │   │   │       └── page.tsx
+│   │   │   │   │
+│   │   │   │   ├── safety/          # Safety & incidents
+│   │   │   │   │   ├── page.tsx
+│   │   │   │   │   ├── incidents/
+│   │   │   │   │   │   ├── page.tsx
+│   │   │   │   │   │   └── [id]/
+│   │   │   │   │   │       └── page.tsx
+│   │   │   │   │   └── reports/
+│   │   │   │   │       └── page.tsx
+│   │   │   │   │
+│   │   │   │   ├── analytics/       # Analytics & KPIs
+│   │   │   │   │   ├── page.tsx
+│   │   │   │   │   ├── fleet/
+│   │   │   │   │   │   └── page.tsx
+│   │   │   │   │   ├── maintenance/
+│   │   │   │   │   │   └── page.tsx
+│   │   │   │   │   └── production/
+│   │   │   │   │       └── page.tsx
+│   │   │   │   │
+│   │   │   │   ├── sites/           # Site management
+│   │   │   │   │   ├── page.tsx
+│   │   │   │   │   └── [id]/
+│   │   │   │   │       └── page.tsx
+│   │   │   │   │
+│   │   │   │   └── settings/        # Settings
+│   │   │   │       ├── page.tsx
+│   │   │   │       ├── profile/
+│   │   │   │       │   └── page.tsx
+│   │   │   │       ├── organization/
+│   │   │   │       │   └── page.tsx
+│   │   │   │       └── users/
+│   │   │   │           └── page.tsx
+│   │   │   │
+│   │   │   └── api/                 # API routes (Next.js API)
+│   │   │       └── health/
+│   │   │           └── route.ts
+│   │   │
+│   │   ├── components/              # React components
+│   │   │   │
+│   │   │   ├── ui/                  # Base UI components (shadcn/ui)
+│   │   │   │   ├── button.tsx
+│   │   │   │   ├── card.tsx
+│   │   │   │   ├── dialog.tsx
+│   │   │   │   ├── dropdown-menu.tsx
+│   │   │   │   ├── input.tsx
+│   │   │   │   ├── label.tsx
+│   │   │   │   ├── table.tsx
+│   │   │   │   ├── tabs.tsx
+│   │   │   │   ├── select.tsx
+│   │   │   │   ├── badge.tsx
+│   │   │   │   ├── alert.tsx
+│   │   │   │   ├── toast.tsx
+│   │   │   │   └── ...
+│   │   │   │
+│   │   │   ├── layout/              # Layout components
+│   │   │   │   ├── Header.tsx
+│   │   │   │   ├── Sidebar.tsx
+│   │   │   │   ├── Footer.tsx
+│   │   │   │   └── MobileNav.tsx
+│   │   │   │
+│   │   │   ├── equipment/           # Equipment components
+│   │   │   │   ├── EquipmentCard.tsx
+│   │   │   │   ├── EquipmentList.tsx
+│   │   │   │   ├── EquipmentForm.tsx
+│   │   │   │   ├── EquipmentStatus.tsx
+│   │   │   │   └── EquipmentFilters.tsx
+│   │   │   │
+│   │   │   ├── maintenance/         # Maintenance components
+│   │   │   │   ├── MaintenanceCalendar.tsx
+│   │   │   │   ├── MaintenanceForm.tsx
+│   │   │   │   ├── MaintenanceHistory.tsx
+│   │   │   │   └── MaintenanceCard.tsx
+│   │   │   │
+│   │   │   ├── telemetry/           # Telemetry components
+│   │   │   │   ├── LiveDashboard.tsx
+│   │   │   │   ├── TelemetryChart.tsx
+│   │   │   │   ├── AlertPanel.tsx
+│   │   │   │   └── EquipmentMap.tsx
+│   │   │   │
+│   │   │   ├── charts/              # Chart components
+│   │   │   │   ├── LineChart.tsx
+│   │   │   │   ├── BarChart.tsx
+│   │   │   │   ├── PieChart.tsx
+│   │   │   │   └── GaugeChart.tsx
+│   │   │   │
+│   │   │   ├── forms/               # Form components
+│   │   │   │   ├── LoginForm.tsx
+│   │   │   │   ├── RegisterForm.tsx
+│   │   │   │   └── DateRangePicker.tsx
+│   │   │   │
+│   │   │   └── common/              # Common components
+│   │   │       ├── LoadingSpinner.tsx
+│   │   │       ├── ErrorBoundary.tsx
+│   │   │       ├── EmptyState.tsx
+│   │   │       ├── StatusBadge.tsx
+│   │   │       ├── DataTable.tsx
+│   │   │       └── SearchInput.tsx
+│   │   │
+│   │   ├── lib/                     # Utilities & helpers
+│   │   │   ├── api.ts               # API client
+│   │   │   ├── auth.ts              # Auth helpers
+│   │   │   ├── utils.ts             # General utilities
+│   │   │   ├── constants.ts         # Constants
+│   │   │   ├── validators.ts        # Form validators
+│   │   │   └── formatters.ts        # Data formatters
+│   │   │
+│   │   ├── hooks/                   # Custom React hooks
+│   │   │   ├── useAuth.ts
+│   │   │   ├── useEquipment.ts
+│   │   │   ├── useMaintenance.ts
+│   │   │   ├── useTelemetry.ts
+│   │   │   ├── useWebSocket.ts
+│   │   │   ├── useDebounce.ts
+│   │   │   └── useLocalStorage.ts
+│   │   │
+│   │   ├── stores/                  # Zustand stores
+│   │   │   ├── authStore.ts
+│   │   │   ├── equipmentStore.ts
+│   │   │   ├── notificationStore.ts
+│   │   │   └── uiStore.ts
+│   │   │
+│   │   ├── types/                   # TypeScript types
+│   │   │   ├── equipment.types.ts
+│   │   │   ├── maintenance.types.ts
+│   │   │   ├── telemetry.types.ts
+│   │   │   ├── user.types.ts
+│   │   │   └── api.types.ts
+│   │   │
+│   │   ├── styles/                  # Styles
+│   │   │   └── custom.css
+│   │   │
+│   │   └── public/                  # Static assets
+│   │       ├── images/
+│   │       ├── icons/
+│   │       └── fonts/
+│   │
+│   └── shared/                      # SHARED CODE (Frontend + Backend)
+│       ├── types/
+│       │   └── common.types.ts
+│       ├── constants/
+│       │   └── enums.ts
+│       └── validators/
+│           └── schemas.ts
+│
+├── tests/                           # Tests
+│   ├── unit/
+│   │   ├── services/
+│   │   └── utils/
+│   ├── integration/
+│   │   └── api/
+│   └── e2e/
+│       └── scenarios/
+│
+├── scripts/                         # Utility scripts
+│   ├── setup.sh
+│   ├── migrate.sh
+│   └── seed-demo-data.ts
+│
+└── config/                          # Configuration files
+    ├── tsconfig.json                # TypeScript config
+    ├── tsconfig.server.json         # Backend TS config
+    ├── next.config.js               # Next.js config
+    ├── tailwind.config.js           # Tailwind config
+    ├── .eslintrc.json              # ESLint config
+    └── .prettierrc                  # Prettier config

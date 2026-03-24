@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"require\\(''razorpay''\\); console.log\\(''razorpay OK''\\)\")",
+      "Bash(node -e \"require\\(''pdfkit''\\); console.log\\(''pdfkit OK''\\)\")",
+      "Bash(node -e \"require\\(''@types/pdfkit''\\); console.log\\(''types OK''\\)\")"
+    ]
+  }
+}

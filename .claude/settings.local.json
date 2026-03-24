@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(for f:*)",
+      "Bash(do echo:*)",
+      "Read(//d/Projects/Mining Saas/**)",
+      "Bash(done)",
+      "Bash(npm install:*)",
+      "Bash(cat \"d:\\\\Projects\\\\Mining Saas\\\\src\\\\client\\\\app\\\\\\(dashboard\\)\\\\layout.tsx\")",
+      "Bash(cat \"d:\\\\Projects\\\\Mining Saas\\\\src\\\\client\\\\app\\\\\\(dashboard\\)\\\\dashboard\\\\page.tsx\")",
+      "Bash(cat \"d:\\\\Projects\\\\Mining Saas\\\\src\\\\client\\\\app\\\\\\(auth\\)\\\\login\\\\page.tsx\")",
+      "Bash(wc -c \"d:/Projects/Mining Saas/src/client/app/layout.tsx\" \"d:/Projects/Mining Saas/src/client/app/\\(dashboard\\)/layout.tsx\" \"d:/Projects/Mining Saas/src/client/app/\\(dashboard\\)/dashboard/page.tsx\" \"d:/Projects/Mining Saas/src/client/components/layout/Sidebar.tsx\" \"d:/Projects/Mining Saas/src/client/components/equipment/EquipmentList.tsx\" \"d:/Projects/Mining Saas/src/client/app/\\(auth\\)/login/page.tsx\")",
+      "Bash(python3 -c \":*)",
+      "Bash(xargs wc:*)",
+      "Bash(npx prisma:*)"
+    ]
+  }
+}

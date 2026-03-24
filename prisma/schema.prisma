@@ -1,0 +1,819 @@
+// Mining Operations SaaS - Database Schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// ORGANIZATION & USER MANAGEMENT
+// ==========================================
+
+model Organization {
+  id            String   @id @default(uuid())
+  name          String
+  industry      String   @default("Mining")
+  country       String
+  timezone      String   @default("UTC")
+  subscription  SubscriptionTier @default(BASIC)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sites               Site[]
+  users               User[]
+  subscriptionHistory SubscriptionHistory[]
+  activeSubscription  Subscription?
+}
+
+enum SubscriptionTier {
+  BASIC
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+model SubscriptionHistory {
+  id              String   @id @default(uuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  tier            SubscriptionTier
+  startDate       DateTime
+  endDate         DateTime?
+  isActive        Boolean  @default(true)
+  mrr             Decimal  @db.Decimal(10, 2)
+  createdAt       DateTime @default(now())
+
+  @@index([organizationId])
+}
+
+model User {
+  id              String   @id @default(uuid())
+  email           String   @unique
+  passwordHash    String
+  firstName       String
+  lastName        String
+  role            UserRole @default(VIEWER)
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  googleId        String?  @unique
+  emailVerified   Boolean  @default(false)
+  emailVerifiedAt DateTime?
+  passwordChangedAt DateTime?
+  profilePicture  String?
+  isActive        Boolean  @default(true)
+  isDeleted       Boolean  @default(false)
+  lastLoginAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  maintenanceRecords MaintenanceRecord[]
+  inspections        Inspection[]
+  shifts             Shift[]
+  createdIncidents   Incident[] @relation("CreatedBy")
+  assignedIncidents  Incident[] @relation("AssignedTo")
+
+  @@index([organizationId])
+  @@index([email])
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  SUPERVISOR
+  OPERATOR
+  MAINTENANCE_TECH
+  VIEWER
+}
+
+// ==========================================
+// SITE & LOCATION MANAGEMENT
+// ==========================================
+
+model Site {
+  id              String   @id @default(uuid())
+  name            String
+  siteCode        String   @unique
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  
+  latitude        Decimal  @db.Decimal(10, 8)
+  longitude       Decimal  @db.Decimal(11, 8)
+  address         String
+  country         String
+  timezone        String
+  
+  mineType        MineType
+  primaryOre      String
+  isActive        Boolean  @default(true)
+  operationalSince DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  equipment       Equipment[]
+  shifts          Shift[]
+  zones           Zone[]
+  productionRecords ProductionRecord[]
+  incidents       Incident[]
+
+  @@index([organizationId])
+  @@index([siteCode])
+}
+
+enum MineType {
+  OPEN_PIT
+  UNDERGROUND
+  QUARRY
+  STRIP_MINE
+  PLACER
+}
+
+model Zone {
+  id          String   @id @default(uuid())
+  name        String
+  zoneCode    String
+  siteId      String
+  site        Site     @relation(fields: [siteId], references: [id])
+  
+  zoneType    ZoneType
+  description String?
+  isActive    Boolean  @default(true)
+  
+  safetyLevel SafetyLevel @default(MEDIUM)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  equipment   Equipment[]
+  incidents   Incident[]
+
+  @@unique([siteId, zoneCode])
+  @@index([siteId])
+}
+
+enum ZoneType {
+  EXTRACTION
+  PROCESSING
+  STORAGE
+  MAINTENANCE
+  ADMIN
+  RESTRICTED
+}
+
+enum SafetyLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// ==========================================
+// EQUIPMENT & FLEET MANAGEMENT
+// ==========================================
+
+model Equipment {
+  id              String   @id @default(uuid())
+  assetNumber     String   @unique
+  name            String
+  equipmentType   EquipmentType
+  
+  siteId          String
+  site            Site     @relation(fields: [siteId], references: [id])
+  
+  currentZoneId   String?
+  currentZone     Zone?    @relation(fields: [currentZoneId], references: [id])
+  
+  manufacturer    String
+  model           String
+  serialNumber    String   @unique
+  yearManufactured Int
+  purchaseDate    DateTime
+  purchaseCost    Decimal  @db.Decimal(12, 2)
+  
+  status          EquipmentStatus @default(OPERATIONAL)
+  
+  // Specifications
+  capacity        Decimal? @db.Decimal(10, 2)
+  capacityUnit    String?  // tons, cubic meters, etc.
+  fuelType        FuelType?
+  fuelCapacity    Decimal? @db.Decimal(10, 2)
+  
+  // Operating metrics
+  totalHours      Decimal  @default(0) @db.Decimal(10, 2)
+  lastServiceHours Decimal @default(0) @db.Decimal(10, 2)
+  nextServiceDue  DateTime?
+  
+  warrantyExpiry  DateTime?
+  insuranceExpiry DateTime?
+  
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  maintenanceRecords MaintenanceRecord[]
+  inspections     Inspection[]
+  telemetry       Telemetry[]
+  fuelLogs        FuelLog[]
+  operatingLogs   OperatingLog[]
+  parts           EquipmentPart[]
+
+  @@index([siteId])
+  @@index([status])
+  @@index([equipmentType])
+}
+
+enum EquipmentType {
+  HAUL_TRUCK
+  EXCAVATOR
+  LOADER
+  DOZER
+  GRADER
+  DRILL
+  CRUSHER
+  CONVEYOR
+  GENERATOR
+  PUMP
+  OTHER
+}
+
+enum EquipmentStatus {
+  OPERATIONAL
+  IN_USE
+  MAINTENANCE
+  REPAIR
+  IDLE
+  DECOMMISSIONED
+}
+
+enum FuelType {
+  DIESEL
+  GASOLINE
+  ELECTRIC
+  HYBRID
+  NATURAL_GAS
+}
+
+// ==========================================
+// TELEMETRY & SENSOR DATA (Time-Series)
+// ==========================================
+
+model Telemetry {
+  id            String   @id @default(uuid())
+  equipmentId   String
+  equipment     Equipment @relation(fields: [equipmentId], references: [id])
+  
+  timestamp     DateTime @default(now())
+  
+  // Operational metrics
+  engineHours   Decimal? @db.Decimal(10, 2)
+  fuelLevel     Decimal? @db.Decimal(5, 2) // percentage
+  speed         Decimal? @db.Decimal(5, 2) // km/h
+  
+  // Engine metrics
+  engineTemp    Decimal? @db.Decimal(5, 2) // Celsius
+  oilPressure   Decimal? @db.Decimal(5, 2) // PSI
+  coolantTemp   Decimal? @db.Decimal(5, 2)
+  
+  // Location
+  latitude      Decimal? @db.Decimal(10, 8)
+  longitude     Decimal? @db.Decimal(11, 8)
+  altitude      Decimal? @db.Decimal(8, 2)
+  
+  // Other sensors
+  vibration     Decimal? @db.Decimal(5, 2)
+  hydraulicPressure Decimal? @db.Decimal(5, 2)
+  batteryVoltage Decimal? @db.Decimal(5, 2)
+  
+  // Alerts
+  warningCodes  String[] // Array of warning/error codes
+  
+  createdAt     DateTime @default(now())
+
+  @@index([equipmentId, timestamp])
+  @@index([timestamp])
+}
+
+// ==========================================
+// MAINTENANCE MANAGEMENT
+// ==========================================
+
+model MaintenanceRecord {
+  id              String   @id @default(uuid())
+  equipmentId     String
+  equipment       Equipment @relation(fields: [equipmentId], references: [id])
+  
+  maintenanceType MaintenanceType
+  status          MaintenanceStatus @default(SCHEDULED)
+  priority        Priority @default(MEDIUM)
+  
+  scheduledDate   DateTime
+  startedAt       DateTime?
+  completedAt     DateTime?
+  
+  description     String
+  notes           String?
+  
+  performedById   String?
+  performedBy     User?    @relation(fields: [performedById], references: [id])
+  
+  laborHours      Decimal? @db.Decimal(5, 2)
+  laborCost       Decimal? @db.Decimal(10, 2)
+  partsCost       Decimal? @db.Decimal(10, 2)
+  totalCost       Decimal? @db.Decimal(10, 2)
+  
+  meterReading    Decimal? @db.Decimal(10, 2) // Hours at time of maintenance
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  partsUsed       MaintenancePart[]
+
+  @@index([equipmentId])
+  @@index([status])
+  @@index([scheduledDate])
+}
+
+enum MaintenanceType {
+  PREVENTIVE
+  CORRECTIVE
+  PREDICTIVE
+  BREAKDOWN
+  INSPECTION
+}
+
+enum MaintenanceStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  OVERDUE
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model EquipmentPart {
+  id              String   @id @default(uuid())
+  equipmentId     String
+  equipment       Equipment @relation(fields: [equipmentId], references: [id])
+  
+  partNumber      String
+  partName        String
+  category        String
+  
+  manufacturer    String?
+  supplier        String?
+  
+  unitCost        Decimal  @db.Decimal(10, 2)
+  quantityOnHand  Int      @default(0)
+  reorderLevel    Int      @default(0)
+  reorderQuantity Int      @default(0)
+  
+  location        String?  // Warehouse location
+  
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  maintenanceUsage MaintenancePart[]
+
+  @@unique([equipmentId, partNumber])
+  @@index([equipmentId])
+}
+
+model MaintenancePart {
+  id                    String   @id @default(uuid())
+  maintenanceRecordId   String
+  maintenanceRecord     MaintenanceRecord @relation(fields: [maintenanceRecordId], references: [id])
+  
+  partId                String
+  part                  EquipmentPart @relation(fields: [partId], references: [id])
+  
+  quantityUsed          Int
+  unitCost              Decimal  @db.Decimal(10, 2)
+  totalCost             Decimal  @db.Decimal(10, 2)
+  
+  createdAt             DateTime @default(now())
+
+  @@index([maintenanceRecordId])
+  @@index([partId])
+}
+
+// ==========================================
+// INSPECTIONS
+// ==========================================
+
+model Inspection {
+  id              String   @id @default(uuid())
+  equipmentId     String
+  equipment       Equipment @relation(fields: [equipmentId], references: [id])
+  
+  inspectionType  InspectionType
+  inspectionDate  DateTime @default(now())
+  
+  inspectorId     String
+  inspector       User     @relation(fields: [inspectorId], references: [id])
+  
+  overallStatus   InspectionStatus
+  
+  meterReading    Decimal? @db.Decimal(10, 2)
+  
+  findings        String?
+  recommendations String?
+  
+  nextInspectionDue DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  checklistItems  InspectionItem[]
+
+  @@index([equipmentId])
+  @@index([inspectionDate])
+}
+
+enum InspectionType {
+  PRE_SHIFT
+  POST_SHIFT
+  WEEKLY
+  MONTHLY
+  ANNUAL
+  SAFETY
+  REGULATORY
+}
+
+enum InspectionStatus {
+  PASS
+  PASS_WITH_NOTES
+  FAIL
+  NEEDS_MAINTENANCE
+}
+
+model InspectionItem {
+  id            String   @id @default(uuid())
+  inspectionId  String
+  inspection    Inspection @relation(fields: [inspectionId], references: [id])
+  
+  category      String   // e.g., "Engine", "Hydraulics", "Safety"
+  checkPoint    String   // e.g., "Oil level", "Brake function"
+  
+  status        CheckStatus
+  notes         String?
+  
+  createdAt     DateTime @default(now())
+
+  @@index([inspectionId])
+}
+
+enum CheckStatus {
+  OK
+  ATTENTION_NEEDED
+  FAILED
+  NOT_APPLICABLE
+}
+
+// ==========================================
+// FUEL MANAGEMENT
+// ==========================================
+
+model FuelLog {
+  id              String   @id @default(uuid())
+  equipmentId     String
+  equipment       Equipment @relation(fields: [equipmentId], references: [id])
+  
+  fuelDate        DateTime @default(now())
+  fuelType        FuelType
+  
+  quantityLiters  Decimal  @db.Decimal(10, 2)
+  costPerLiter    Decimal  @db.Decimal(6, 2)
+  totalCost       Decimal  @db.Decimal(10, 2)
+  
+  meterReading    Decimal? @db.Decimal(10, 2)
+  
+  supplier        String?
+  invoiceNumber   String?
+  
+  notes           String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([equipmentId])
+  @@index([fuelDate])
+}
+
+// ==========================================
+// OPERATIONS & PRODUCTION
+// ==========================================
+
+model Shift {
+  id              String   @id @default(uuid())
+  siteId          String
+  site            Site     @relation(fields: [siteId], references: [id])
+  
+  shiftType       ShiftType
+  shiftDate       DateTime @db.Date
+  startTime       DateTime
+  endTime         DateTime
+  
+  supervisorId    String?
+  supervisor      User?    @relation(fields: [supervisorId], references: [id])
+  
+  crewSize        Int      @default(0)
+  
+  notes           String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  operatingLogs   OperatingLog[]
+
+  @@index([siteId, shiftDate])
+}
+
+enum ShiftType {
+  DAY
+  NIGHT
+  SWING
+}
+
+model OperatingLog {
+  id              String   @id @default(uuid())
+  equipmentId     String
+  equipment       Equipment @relation(fields: [equipmentId], references: [id])
+  
+  shiftId         String?
+  shift           Shift?   @relation(fields: [shiftId], references: [id])
+  
+  startTime       DateTime
+  endTime         DateTime?
+  
+  operatorName    String?
+  
+  startMeterReading Decimal? @db.Decimal(10, 2)
+  endMeterReading   Decimal? @db.Decimal(10, 2)
+  
+  hoursOperated   Decimal? @db.Decimal(5, 2)
+  
+  activity        String?  // e.g., "Hauling", "Excavation"
+  location        String?
+  
+  notes           String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([equipmentId])
+  @@index([shiftId])
+  @@index([startTime])
+}
+
+model ProductionRecord {
+  id              String   @id @default(uuid())
+  siteId          String
+  site            Site     @relation(fields: [siteId], references: [id])
+  
+  productionDate  DateTime @db.Date
+  
+  oreType         String
+  
+  tonnesMined     Decimal  @db.Decimal(12, 2)
+  tonnesProcessed Decimal? @db.Decimal(12, 2)
+  grade           Decimal? @db.Decimal(5, 2) // percentage or g/t
+  
+  blastCount      Int?     @default(0)
+  
+  notes           String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([siteId, productionDate])
+}
+
+// ==========================================
+// SAFETY & INCIDENTS
+// ==========================================
+
+model Incident {
+  id              String   @id @default(uuid())
+  incidentNumber  String   @unique
+  
+  siteId          String
+  site            Site     @relation(fields: [siteId], references: [id])
+  
+  zoneId          String?
+  zone            Zone?    @relation(fields: [zoneId], references: [id])
+  
+  incidentType    IncidentType
+  severity        IncidentSeverity
+  
+  incidentDate    DateTime
+  reportedDate    DateTime @default(now())
+  
+  description     String
+  rootCause       String?
+  correctiveAction String?
+  
+  createdById     String
+  createdBy       User     @relation("CreatedBy", fields: [createdById], references: [id])
+  
+  assignedToId    String?
+  assignedTo      User?    @relation("AssignedTo", fields: [assignedToId], references: [id])
+  
+  status          IncidentStatus @default(OPEN)
+  
+  injuryCount     Int      @default(0)
+  fatalityCount   Int      @default(0)
+  
+  lostTimeHours   Decimal? @db.Decimal(8, 2)
+  
+  isReportable    Boolean  @default(false) // Regulatory reporting required
+  
+  closedAt        DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([siteId])
+  @@index([incidentDate])
+  @@index([status])
+}
+
+enum IncidentType {
+  INJURY
+  NEAR_MISS
+  PROPERTY_DAMAGE
+  ENVIRONMENTAL
+  SECURITY
+  EQUIPMENT_FAILURE
+  OPERATIONAL
+}
+
+enum IncidentSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+  FATAL
+}
+
+enum IncidentStatus {
+  OPEN
+  INVESTIGATING
+  UNDER_REVIEW
+  CLOSED
+}
+
+// ==========================================
+// ANALYTICS & REPORTING
+// ==========================================
+
+model KPISnapshot {
+  id              String   @id @default(uuid())
+  organizationId  String
+  siteId          String?
+  
+  snapshotDate    DateTime @db.Date
+  snapshotType    SnapshotType @default(DAILY)
+  
+  // Production KPIs
+  totalProduction Decimal? @db.Decimal(12, 2)
+  
+  // Equipment KPIs
+  fleetUtilization Decimal? @db.Decimal(5, 2) // percentage
+  availableEquipment Int?
+  inUseEquipment    Int?
+  maintenanceEquipment Int?
+  
+  // Maintenance KPIs
+  plannedMaintenanceCompliance Decimal? @db.Decimal(5, 2)
+  meanTimeBetweenFailure Decimal? @db.Decimal(8, 2) // hours
+  
+  // Fuel KPIs
+  totalFuelConsumed Decimal? @db.Decimal(10, 2)
+  fuelCost          Decimal? @db.Decimal(12, 2)
+  
+  // Safety KPIs
+  incidentCount     Int?     @default(0)
+  lostTimeIncidents Int?     @default(0)
+  safeDaysCount     Int?     @default(0)
+  
+  createdAt         DateTime @default(now())
+
+  @@unique([organizationId, siteId, snapshotDate, snapshotType])
+  @@index([organizationId, snapshotDate])
+}
+
+enum SnapshotType {
+  HOURLY
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+// ==========================================
+// SUBSCRIPTION & BILLING
+// ==========================================
+
+model Subscription {
+  id                 String             @id @default(uuid())
+  organizationId     String             @unique
+  organization       Organization       @relation(fields: [organizationId], references: [id])
+  tier               SubscriptionTier
+  status             SubscriptionStatus @default(TRIAL)
+  billingCycle       BillingCycle       @default(MONTHLY)
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  trialEndsAt        DateTime?
+  cancelAt           DateTime?
+  canceledAt         DateTime?
+  razorpaySubId      String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  payments           Payment[]
+  invoices           Invoice[]
+
+  @@index([organizationId])
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+
+enum BillingCycle {
+  MONTHLY
+  YEARLY
+}
+
+model Payment {
+  id                String            @id @default(uuid())
+  organizationId    String
+  subscriptionId    String
+  subscription      Subscription      @relation(fields: [subscriptionId], references: [id])
+  razorpayOrderId   String            @unique
+  razorpayPaymentId String?           @unique
+  razorpaySignature String?
+  amount            Decimal           @db.Decimal(10, 2)
+  currency          String            @default("INR")
+  tier              SubscriptionTier?
+  billingCycle      BillingCycle?
+  status            PaymentStatus     @default(PENDING)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  invoice           Invoice?
+
+  @@index([organizationId])
+  @@index([subscriptionId])
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+model Invoice {
+  id                 String        @id @default(uuid())
+  invoiceNumber      String        @unique
+  organizationId     String
+  subscriptionId     String
+  subscription       Subscription  @relation(fields: [subscriptionId], references: [id])
+  paymentId          String?       @unique
+  payment            Payment?      @relation(fields: [paymentId], references: [id])
+  amount             Decimal       @db.Decimal(10, 2)
+  tax                Decimal       @db.Decimal(10, 2) @default(0)
+  totalAmount        Decimal       @db.Decimal(10, 2)
+  status             InvoiceStatus @default(PENDING)
+  billingPeriodStart DateTime
+  billingPeriodEnd   DateTime
+  dueDate            DateTime
+  paidAt             DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@index([organizationId])
+  @@index([subscriptionId])
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
